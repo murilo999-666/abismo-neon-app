@@ -1,5 +1,5 @@
 // cache offline do Abismo Neon 2 (gerado)
-const CACHE = 'abismo-neon-844a94d2e4';
+const CACHE = 'abismo-neon-5bf6c0843c';
 const ARQUIVOS = ["./","index.html","manifest.webmanifest","icone-180.png","icone-192.png","icone-512.png"];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
@@ -10,5 +10,22 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((r) => r || fetch(e.request).catch(() => caches.match('index.html'))));
+  const url = new URL(e.request.url);
+  const pagina = e.request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('/index.html');
+  if (pagina) {
+    // com internet: confere se tem versão nova (304 se não tiver); sem internet ou demorando: abre a do aparelho
+    const daRede = fetch(e.request, { cache: 'no-cache' }).then((r) => {
+      if (r.ok) { const c = r.clone(); caches.open(CACHE).then((k) => k.put('index.html', c)); }
+      return r;
+    });
+    const doCache = caches.match('index.html');
+    e.respondWith(new Promise((ok) => {
+      let feito = false;
+      const usar = (r) => { if (!feito && r) { feito = true; ok(r); } };
+      const t = setTimeout(() => doCache.then(usar), 2500);
+      daRede.then((r) => { clearTimeout(t); usar(r); }).catch(() => doCache.then((r) => usar(r || Response.error())));
+    }));
+    return;
+  }
+  e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((r) => r || fetch(e.request)));
 });

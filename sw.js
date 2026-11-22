@@ -1,5 +1,5 @@
 // cache offline do Abismo Neon 2 (gerado)
-const CACHE = 'abismo-neon-6acbf837a1';
+const CACHE = 'abismo-neon-eb0e0a8503';
 const ARQUIVOS = ["./","index.html","manifest.webmanifest","icone-180.png","icone-192.png","icone-512.png"];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
